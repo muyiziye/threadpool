@@ -12,11 +12,13 @@
 #include <functional>
 #include <string>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 // can use like Task(std::string);
 typedef std::function<void(std::string)> TaskFunction;
 
-struct {
+typedef struct Task{
     TaskFunction task_function;
     std::string task_param;
 }TpTask;
@@ -35,20 +37,26 @@ public:
     // get Thread max number for threadpool
     inline int getThreadMaxNumber(){return m_thread_max_num;}
 
+    void run();
+    void stop();
+
 private:
     // initialization the Thread pool
     void initThreadpool();
 
+    void thread_handle();
+
 private:
     std::vector<std::thread> m_thread_vec;
-    std::queue<Task> m_tasks_queue;
+    std::queue<TpTask> m_tasks_queue;
     // define the max thread num;
     int m_thread_max_num;
     bool m_stop_threadpool;
+    std::mutex m_tasks_mutex;
+    std::mutex m_thread_mutex;
+    std::condition_variable m_cv;
 
-
-}
-
+};
 
 
 } // END of MY_THREAD_POOL
