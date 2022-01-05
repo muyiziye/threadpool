@@ -1,6 +1,8 @@
 #include "threadpool.h"
 
-#define THREAD_MAX_NUMBER 2
+#include <unistd.h>
+
+#define THREAD_MAX_NUMBER 10
 
 namespace MY_THREAD_POOL{
 
@@ -13,24 +15,32 @@ ThreadPool::ThreadPool():
     initThreadpool();
 }
 
-ThreadPool::~ThreadPool(){}
+ThreadPool::~ThreadPool(){
+}
 
 void ThreadPool::addTask(TpTask my_task){
-
     std::lock_guard<std::mutex> lck(m_tasks_mutex);
-
     m_tasks_queue.push(my_task);
-    m_cv.notify_one();
 }
 
 void ThreadPool::thread_handle(){
+    std::cout << "run thread_handle..." << std::endl;
     std::unique_lock<std::mutex> lck(m_thread_mutex);
     while(!m_stop_threadpool){
-        m_cv.wait(lck);
-        TpTask my_task = m_tasks_queue.front();
-        my_task.task_function(my_task.task_param);
-        m_tasks_queue.pop();
+        {
+            m_cv.wait(lck);
+        }
 
+        TpTask my_task; 
+        {
+            std::lock_guard<std::mutex> new_lck(m_tasks_mutex);
+            if (m_tasks_queue.size() < 1){
+                continue;
+            }
+            my_task = m_tasks_queue.front();
+            m_tasks_queue.pop();
+        }
+        my_task.task_function(my_task.task_param);
     }
 }
 
@@ -43,7 +53,9 @@ void ThreadPool::initThreadpool()
 
 void ThreadPool::run()
 {
-    m_stop_threadpool = false;
+    while(m_tasks_queue.size() != 0){
+        m_cv.notify_one();
+    }
 }
 
 void ThreadPool::stop()
