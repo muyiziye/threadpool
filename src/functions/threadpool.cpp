@@ -25,9 +25,9 @@ void ThreadPool::addTask(TpTask my_task){
 
 void ThreadPool::thread_handle(){
     std::cout << "run thread_handle..." << std::endl;
-    std::unique_lock<std::mutex> lck(m_thread_mutex);
     while(!m_stop_threadpool){
         {
+    	    std::unique_lock<std::mutex> lck(m_thread_mutex);
             m_cv.wait(lck);
         }
 
@@ -54,6 +54,7 @@ void ThreadPool::initThreadpool()
 void ThreadPool::run()
 {
     while(m_tasks_queue.size() != 0){
+    	std::unique_lock<std::mutex> lck(m_thread_mutex);
         m_cv.notify_one();
     }
 }
@@ -61,6 +62,7 @@ void ThreadPool::run()
 void ThreadPool::stop()
 {
     m_stop_threadpool = true;
+    std::unique_lock<std::mutex> lck(m_thread_mutex);
     m_cv.notify_all();
     for(auto &my_thread : m_thread_vec){
         my_thread.join();

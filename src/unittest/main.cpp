@@ -14,12 +14,14 @@
 #include "threadpool.h"
 using namespace std;
 
+
 void fun1(std::string str){
     std::cout << "call fun1: " << str << "The thread id is " << pthread_self()  << std::endl;
 }
 
 void fun2(std::string str){
-    std::cout << "call fun2: " << str << "The thread id is " << pthread_self()  << std::endl;
+    LOG_TRACE("call fun2, str is %s, thread id is %u.\n", str.c_str(), pthread_self());
+    sleep(1);
 }
 
 int main()
@@ -44,8 +46,6 @@ int main()
 
     tpool1.run();
     tpool1.stop();
-
-
 
     LOG_EXIT();
     return 0;
